@@ -1,0 +1,10 @@
+The parent process will create for each argument one child process that will handle the options introduced by the user (for each file type we have the corresponding options).
+
+If the argument is a regular file with the .c extension, the parent will create one more process (a second child process) that will execute a script.
+
+Script requirement:
+Having a regular file with the .c extension given as argument, the script should compile the file and print at standard output the number of errors and the number of warnings.
+
+If the argument is a directory, the parent will create a second child process which will execute a command for creating a file with the .txt extension and a specific name (e.g. dirName_file.txt)
+
+The parent process must properly receive the return state of its child processes. All child processes must run in parallel with each other.
