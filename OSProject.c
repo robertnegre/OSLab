@@ -330,76 +330,20 @@ void directoryOptions(char *path, struct stat stats) {
     }
 }
 
-void createTxtFile(char *dirname) {
-    char *filename = malloc(strlen(dirname) + 11);
+void createTxtFile(char* dirname) {
+    char filename[strlen(dirname) + 11];
     sprintf(filename, "%s_file.txt", dirname);
-
-    pid_t pid;
-    int status;
-
-    pid = fork();
-
-    if (pid < 0) {
-        perror("fork error");
-        exit(EXIT_FAILURE);
-    } else if (pid == 0) {
-        // Child process
-        char* args[] = {"touch", NULL};
-        args[1] = filename;
-        execvp("touch", args);
-        perror("execvp error");
-        exit(EXIT_FAILURE);
-    } else {
-        // Parent process
-        if (waitpid(pid, &status, 0) == -1) {
-            perror("waitpid error");
-            exit(EXIT_FAILURE);
-        } else {
-            printf("File created: %s\n", filename);
-        }
-    }
-
-    free(filename);
+    char* args[] = {"touch", filename, NULL};
+    execvp(args[0], args);
+    perror("Failed to execute touch command");
+    exit(EXIT_FAILURE);
 }
-
 
 void compileScript(char* filename) {
-    pid_t pid;
-    int status;
-
-    pid = fork();
-
-    if (pid < 0) {
-        perror("fork error");
-        exit(EXIT_FAILURE);
-    } else if (pid == 0) {
-        // Child process
-        //char* args[] = {"gcc", "-o", "/dev/null", "-Wall", "-Werror", filename, NULL};
-        char* args[] = {"gcc", "-Wall", filename, NULL};
-        execvp("gcc", args);
-        perror("execvp error!");
-        exit(EXIT_FAILURE);
-    } else {
-        // Parent process
-        if (waitpid(pid, &status, 0) == -1) {
-            perror("waitpid error");
-            exit(EXIT_FAILURE);
-        } else {
-            if (WIFEXITED(status)) {
-                int exitStatus = WEXITSTATUS(status);
-                if (exitStatus == 0) {
-                    printf("Compilation successful with no errors or warnings\n");
-                } else {
-                    printf("Compilation failed with %d errors/warnings\n", exitStatus);
-                }
-            } else if (WIFSIGNALED(status)) {
-                printf("Compilation terminated by signal %d\n", WTERMSIG(status));
-            }
-        }
-    }
+    execlp("bash", "bash", "compile.sh", filename, NULL);
+    perror("execlp error!");
+    exit(EXIT_FAILURE);
 }
-
-
 
 int main(int argc, char *argv[]) {
     pid_t pid, pidc;
@@ -423,7 +367,7 @@ int main(int argc, char *argv[]) {
                 exit(1);
             } else if(pid == 0) { // child process
                 if(S_ISREG(stats.st_mode)) {
-                    printf("\n%s - REGULAR FILE\n", argv[i]);
+                    printf("\n%s - REGULAR FILE\n\n", argv[i]);
                     if(strstr(path, ".c") != NULL) {
                         pidc = fork();
                         if(pidc < 0) {
@@ -447,7 +391,7 @@ int main(int argc, char *argv[]) {
                     printf("\n%s - SYMBOLIC LINK.\n", argv[i]);
                     symbolicLinkOptions(path, stats);
                 } else if(S_ISDIR(stats.st_mode)) {
-                    printf("\n%s - DIRECTORY\n", argv[i]);
+                    printf("\n%s - DIRECTORY\n\n", argv[i]);
                     if(opendir(path) != NULL) {
                         pidc = fork();
                         if(pidc < 0) {
