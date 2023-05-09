@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#check args: expect one to be .c file; checks if is the correct number; checks file
-
 if [ $# -ne 1 ]; then
     echo "Usage: $0 file.c"
     exit 1
@@ -12,21 +10,8 @@ if [ ! -f "$1" ]; then
     exit 1
 fi
 
-#compile
-gcc -o compile -Wall "$1" > compiler_output.txt 2>&1
-
-#check if compilation was successful
-if [ $? -gt 0 ]; then
-    #Count the number of errors and warnings in the compiler_output.txt file
-    errors=$(grep -c 'error' compiler_output.txt)
-    warnings=$(grep -c 'warning' compiler_output.txt)
-    echo "Compilation successful. Executable file created: compile"
-    echo "Number of errors: $errors"
-    echo "Number of warnings: $warnings"
-else
-    echo "Compilation failed."
-    exit 1
-fi
-
-# Remove the compiler_output.txt file
-rm compiler_output.txt
+output=$(gcc -Wall "$1" 2>&1)
+error_count=$(echo "$output" | grep -c 'error:')
+warning_count=$(echo "$output" | grep -c 'warning:')
+echo "Errors: $error_count"
+echo "Warnings: $warning_count"
