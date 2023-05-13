@@ -70,6 +70,39 @@ void printDirectoryOptions() {
     printf("Enter the option: ");
 }
 
+char* getValidOptions(const char* valid_chars) {
+    int isValid = 0;
+    static char options[10];
+    
+    do {
+        if (isValid) {
+            break;
+        }
+        isValid = 1;
+
+        scanf("%9s", options);
+
+        if (options[0] != '-' || strlen(options) < 2) {
+            printf("Invalid option. Please enter a valid option.\n");
+            isValid = 0;
+        } else {
+            for (int i = 1; i < strlen(options); i++) {
+                if (!strchr(valid_chars, options[i])) {
+                    printf("Invalid option: %c. Please enter a valid option.\n", options[i]);
+                    isValid = 0;
+                    break;
+                }
+            }
+        }
+
+        if (!isValid) {
+            printRegularFileOptions();
+        }
+    } while (!isValid);
+    
+    return options;
+}
+
 // Function to print file information
 void regularFileOptions(char *path, struct stat stats) {
     char link_name[100];
@@ -81,34 +114,7 @@ void regularFileOptions(char *path, struct stat stats) {
     
         printRegularFileOptions();
         
-        int isValid = 0;
-        char options[10];
-        do {
-            if (isValid) {
-                break;
-            }
-            isValid = 1;
-    
-            scanf("%9s", options);
-    
-            if (options[0] != '-' || strlen(options) < 2) {
-                printf("Invalid option. Please enter a valid option.\n");
-                isValid = 0;
-            } else {
-                for (int i = 1; i < strlen(options); i++) {
-                    if (!strchr("ndhmal", options[i])) {
-                        printf("Invalid option: %c. Please enter a valid option.\n", options[i]);
-                        isValid = 0;
-                        break;
-                    }
-                }
-            }
-    
-            if (!isValid) {
-                printRegularFileOptions();
-            }
-        } while (!isValid);
-
+        char* options = getValidOptions("ndhmal");
 
         printf("Selected options: %s\n", options);
 
@@ -144,13 +150,7 @@ void regularFileOptions(char *path, struct stat stats) {
                     break;
             }
         }
-    } else if (S_ISDIR(stats.st_mode)) {
-        printf("File type: directory\n");
-    } else if (S_ISLNK(stats.st_mode)) {
-        printf("File type: symbolic link\n");
-    } else {
-        printf("Unknown file type\n");
-    }
+    } 
 }
 
 // Function to print link information
@@ -162,34 +162,7 @@ void symbolicLinkOptions(char *path, struct stat stats) {
     
         printSymbolicLinkOptions();
         
-        int isValid = 0;
-        char options[10];
-        do {
-            if (isValid) {
-                break;
-            }
-            isValid = 1;
-    
-            scanf("%9s", options);
-    
-            if (options[0] != '-' || strlen(options) < 2) {
-                printf("Invalid option. Please enter a valid option.\n");
-                isValid = 0;
-            } else {
-                for (int i = 1; i < strlen(options); i++) {
-                    if (!strchr("ndtal", options[i])) {
-                        printf("Invalid option: %c. Please enter a valid option.\n", options[i]);
-                        isValid = 0;
-                        break;
-                    }
-                }
-            }
-    
-            if (!isValid) {
-                printSymbolicLinkOptions();
-            }
-        } while (!isValid);
-
+        char* options = getValidOptions("ndtal");
 
         printf("Selected options: %s\n", options);
 
@@ -235,13 +208,7 @@ void symbolicLinkOptions(char *path, struct stat stats) {
                     break; 
             }
         }
-    } else if (S_ISDIR(stats.st_mode)) {
-        printf("File type: directory\n");
-    } else if (S_ISREG(stats.st_mode)) {
-        printf("File type: regular file\n");
-    } else {
-        printf("Unknown file type\n");
-    }
+    } 
 }
 
 
@@ -254,37 +221,16 @@ void directoryOptions(char *path, struct stat stats) {
     
         printDirectoryOptions();
         
-        int isValid = 0;
-        char options[10];
-        do {
-            if (isValid) {
-                break;
-            }
-            isValid = 1;
-    
-            scanf("%9s", options);
-    
-            if (options[0] != '-' || strlen(options) < 2) {
-                printf("Invalid option. Please enter a valid option.\n");
-                isValid = 0;
-            } else {
-                for (int i = 1; i < strlen(options); i++) {
-                    if (!strchr("ndac", options[i])) {
-                        printf("Invalid option: %c. Please enter a valid option.\n", options[i]);
-                        isValid = 0;
-                        break;
-                    }
-                }
-            }
-    
-            if (!isValid) {
-                printDirectoryOptions();
-            }
-        } while (!isValid);
+        char* options = getValidOptions("ndac");
 
         printf("Selected options: %s\n", options);
 
         DIR *dir = opendir(path);
+
+        if (dir == NULL) {
+            printf("Directory could not be open\n");
+            exit(EXIT_FAILURE);
+        }
 
         for(int i = 1; i < strlen(options); i++) {
             switch(options[i]) {
@@ -321,13 +267,7 @@ void directoryOptions(char *path, struct stat stats) {
 
             }
         }
-    } else if (S_ISLNK(stats.st_mode)) {
-        printf("File type: link\n");
-    } else if (S_ISREG(stats.st_mode)) {
-        printf("File type: regular file\n");
-    } else {
-        printf("Unknown file type\n");
-    }
+    } 
 }
 
 void createTxtFile(char* dirname) {
@@ -348,12 +288,10 @@ void compileScript(char* filename, int writeEnd, int readEnd) {
     exit(EXIT_FAILURE);
 }
 
-void printNoOfLines(char* filename, int readEnd, int writeEnd) {
-    close(readEnd); // close read descriptor; child will write into pipe
-    dup2(writeEnd, 1); // redirect standard output to pipe write end
-    execlp("wc", "wc", "-l", NULL); // execute wc command
+void printNoOfLines(char* filename) {
+    sleep(10);
+    execlp("wc", "wc", "-l", filename, NULL); // execute wc command
     perror("execlp error!\n"); // print error message if execution fails
-    close(writeEnd);
     exit(EXIT_FAILURE);
 }
 
@@ -364,9 +302,26 @@ void changeRights(char* linkname) {
     exit(EXIT_FAILURE);
 }
 
+int computeScore(int errors, int warnings)
+{
+    if (errors == 0 && warnings == 0)
+    {
+        return 10;
+    }
+    else if (errors >= 1)
+    {
+        return 1;
+    }
+    else if (errors == 0 && warnings > 10)
+    {
+        return 2;
+    }
+
+    return 2 + 8 * (10 - warnings) / 10;
+}
+
 int main(int argc, char **argv) {
     pid_t pidFile, pidFileOpt, pidLnk, pidLnkOpt, pidDir, pidDirOpt;
-    //int status;
     int pfd[2];
 
     if(pipe(pfd) < 0) {
@@ -387,8 +342,6 @@ int main(int argc, char **argv) {
             }
 
             if(S_ISREG(stats.st_mode)) {
-                printf("\n%s - REGULAR FILE\n\n", argv[i]);
-
                 pidFile = fork();
                 if(pidFile < 0) {
                     perror("Error on fork!");
@@ -396,10 +349,10 @@ int main(int argc, char **argv) {
                 } else if(pidFile == 0) { // child1
                     if(strstr(path, ".c") != NULL) {
                         compileScript(path, pfd[1], pfd[0]);
-                        exit(EXIT_FAILURE);
+                        exit(0);
                     } else {
-                        printNoOfLines(path, pfd[1], pfd[0]);
-                        exit(EXIT_FAILURE);
+                        printNoOfLines(path);
+                        exit(0);
                     }
                 }
 
@@ -409,7 +362,7 @@ int main(int argc, char **argv) {
                     exit(1);
                 } else if(pidFileOpt == 0) { //child2
                     regularFileOptions(path, stats);
-                    exit(EXIT_FAILURE);
+                    exit(0);
                 }
 
                 close(pfd[1]); // close write end of pipe
@@ -421,7 +374,6 @@ int main(int argc, char **argv) {
                     int exit_code = WEXITSTATUS(status);
                     int score = 0, errors = 0, warnings = 0;
                     char buffer[1024];
-                    // read in a while
                     int n = read(pfd[0], buffer, 1024); // read output from pipe
 
                     if (n > 0) {
@@ -436,18 +388,14 @@ int main(int argc, char **argv) {
                             ptr = strchr(ptr, '\n');
                             if (ptr == NULL) break;
                             ptr++;
-                        }
-                        if (errors == 0 && warnings == 0) {
-                            score = 10;
-                        } else if (errors > 0) {
-                            score = 1;
-                        } else if (warnings > 10) {
-                            score = 2;
-                        } else {
-                            score = 2 + 8 * (10 - warnings) / 10;
-                        }
-                    }
-                    char grade[100000 + 10];
+                        } 
+                        
+                        score = computeScore(errors, warnings);
+                        printf("score: %d", score);
+
+                    } 
+                    
+                    char grade[30];
                     sprintf(grade, "%s: %d\n", argv[i], score);
                     int fd = open("grades.txt", O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
                     if (fd == -1) {
@@ -459,21 +407,19 @@ int main(int argc, char **argv) {
                         exit(EXIT_FAILURE);
                     }
                     close(fd);
-                    printf("Compile process for %s exited with status %d\n", argv[i], exit_code);
+                    printf("Process for %s exited with status %d\n", argv[i], exit_code); 
                 } else {
-                    printf("Compile process for %s terminated abnormally\n", argv[i]);
-                }
+                    printf("Process for %s terminated abnormally\n", argv[i]);
+                } 
 
             } else if(S_ISLNK(stats.st_mode)) {
-                printf("\n%s - SYMBOLIC LINK.\n", argv[i]);
-
                 pidLnk = fork();
                 if(pidLnk < 0) {
                     perror("Error on fork!");
                     exit(1);
                 } else if(pidLnk == 0) { // child1
                     changeRights(path);
-                    exit(EXIT_FAILURE);
+                    exit(0);
                 }
 
                 pidLnkOpt = fork();
@@ -482,7 +428,7 @@ int main(int argc, char **argv) {
                     exit(1);
                 } else if(pidLnkOpt == 0) { //child2
                     symbolicLinkOptions(path, stats);
-                    exit(EXIT_FAILURE);
+                    exit(0);
                 }
 
                 int status;
@@ -491,21 +437,19 @@ int main(int argc, char **argv) {
 
                 if (WIFEXITED(status)) {
                     int exit_code = WEXITSTATUS(status);
-                    printf("Compile process for %s exited with status %d\n", argv[i], exit_code);
+                    printf("Process for %s exited with status %d\n", argv[i], exit_code);
                 } else {
-                    printf("Compile process for %s terminated abnormally\n", argv[i]);
+                    printf("Process for %s terminated abnormally\n", argv[i]);
                 }
 
             } else if(S_ISDIR(stats.st_mode)) {
-                printf("\n%s - DIRECTORY\n\n", argv[i]);
-
                 pidDir = fork();
                 if(pidDir < 0) {
                     perror("Error on fork!");
                     exit(1);
                 } else if(pidDir == 0) { //child1
                     createTxtFile(path);
-                    exit(EXIT_FAILURE);
+                    exit(0);
                 }
                 pidDirOpt = fork();
                 if(pidDirOpt < 0) {
@@ -513,7 +457,7 @@ int main(int argc, char **argv) {
                     exit(1);
                 } else if(pidDirOpt == 0) { //child2
                     directoryOptions(path, stats);
-                    exit(EXIT_FAILURE);
+                    exit(0);
                 }
     
                 int status;
@@ -522,9 +466,9 @@ int main(int argc, char **argv) {
 
                 if (WIFEXITED(status)) {
                     int exit_code = WEXITSTATUS(status);
-                    printf("Compile process for %s exited with status %d\n", argv[i], exit_code);
+                    printf("Process for %s exited with status %d\n", argv[i], exit_code);
                 } else {
-                    printf("Compile process for %s terminated abnormally\n", argv[i]);
+                    printf("Process for %s terminated abnormally\n", argv[i]);
                 }
 
             } else {
@@ -533,7 +477,7 @@ int main(int argc, char **argv) {
 
         }
     }
-
-    //close(pfd[0]); // close read end of pipe
+    close(pfd[0]);
+    close(pfd[1]);
     return 0;
 }
