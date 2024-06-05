@@ -1,6 +1,5 @@
-# OSLab
 # File System Analysis and Management Tool
-Repo of Robert Negre for the Operating Systems Laboratory Project
+## Operating Systems - Individual Project 
 
 This project serves as a comprehensive C-based tool designed to analyze and
 manage various aspects of the file system. With the use of system calls and library
